@@ -105,11 +105,11 @@ brew install python iperf3
 1. **在电脑 B（服务器）**：
    - 模式选择："服务器"
    - 点击"开始测试"
-   - 记下 B 的 IP 地址（如 192.168.1.100）
+   - 记下 B 的 IP 地址（如 ***已脱敏***-内网IP）
 
 2. **在电脑 A（客户端）**：
    - 模式选择："客户端"
-   - 服务器地址输入：`192.168.1.100`（B 的 IP）
+   - 服务器地址输入：`***已脱敏***-内网IP`（B 的 IP）
    - 点击"开始测试"
 
 **结果解读**：显示的是 A 到 B 的网络速度。如果您的网络是千兆（1Gbps），理想值应该是 940Mbps 左右（理论值的 94%）。
@@ -137,8 +137,8 @@ brew install python iperf3
 #### 3.1.2 服务器地址
 - **格式**：IP 地址或域名
 - **示例**：
-  - `192.168.1.1`（局域网 IP）
-  - `10.0.0.1`（内网 IP）
+  - `***已脱敏***-内网IP`（局域网 IP）
+  - `***已脱敏***-内网IP`（内网 IP）
   - `www.example.com`（域名，会自动解析为 IP）
   - `127.0.0.1`（本地回环地址，用于测试本机）
 
@@ -1613,9 +1613,9 @@ def parse_iperf_output(output):
 def main():
     # 测试配置
     tests = [
-        {"server": "192.168.1.100", "duration": 30, "parallel": 1},
-        {"server": "192.168.1.100", "duration": 30, "parallel": 4},
-        {"server": "192.168.1.100", "duration": 30, "parallel": 8},
+        {"server": "***已脱敏***-内网IP", "duration": 30, "parallel": 1},
+        {"server": "***已脱敏***-内网IP", "duration": 30, "parallel": 4},
+        {"server": "***已脱敏***-内网IP", "duration": 30, "parallel": 8},
     ]
     
     all_results = []
@@ -1653,7 +1653,7 @@ def daily_monitor():
     
     # 测试到多个目标
     targets = [
-        {"name": "本地服务器", "server": "192.168.1.1", "port": 5201},
+        {"name": "本地服务器", "server": "***已脱敏***-内网IP", "port": 5201},
         {"name": "互联网测试点1", "server": "ping.online.net", "port": 5201},
         {"name": "互联网测试点2", "server": "iperf.he.net", "port": 5201},
     ]
@@ -1869,7 +1869,7 @@ tests:
   # 基础连通性测试
   basic_connectivity:
     description: "基础连通性测试"
-    server: "192.168.1.1"
+    server: "***已脱敏***-内网IP"
     port: 5201
     duration: 30
     parallel: 1
@@ -1881,7 +1881,7 @@ tests:
   # 压力测试
   stress_test:
     description: "多流压力测试"
-    server: "192.168.1.1"
+    server: "***已脱敏***-内网IP"
     duration: 300
     parallel: 16
     bandwidth: "1G"
@@ -1891,7 +1891,7 @@ tests:
   # 双向测试
   bidirectional_test:
     description: "双向带宽测试"
-    server: "192.168.1.1"
+    server: "***已脱敏***-内网IP"
     duration: 60
     parallel: 8
     bidirectional: true
@@ -2244,14 +2244,14 @@ iperf3 -s --idle-timeout 300 --server-max-duration 3600
 iperf3 -s -p 15201
 
 # 绑定特定IP
-iperf3 -s -B 192.168.1.100
+iperf3 -s -B ***已脱敏***-内网IP
 ```
 
 #### 7.1.2 防火墙配置
 **必要的最小规则**：
 ```
 # 只允许特定IP访问
-iptables -A INPUT -p tcp --dport 5201 -s 192.168.1.0/24 -j ACCEPT
+iptables -A INPUT -p tcp --dport 5201 -s ***已脱敏***-内网IP/24 -j ACCEPT
 iptables -A INPUT -p tcp --dport 5201 -j DROP
 
 # 限制连接速率
@@ -3182,14 +3182,14 @@ class TestScenarioLibrary:
             "tests": [
                 {
                     "name": "局域网有线测试",
-                    "server": "192.168.1.1",
+                    "server": "***已脱敏***-内网IP",
                     "duration": 30,
                     "parallel": 1,
                     "expected_bandwidth": 900  # Mbps
                 },
                 {
                     "name": "Wi-Fi近距离测试",
-                    "server": "192.168.1.1",
+                    "server": "***已脱敏***-内网IP",
                     "duration": 30,
                     "parallel": 4,
                     "wireless": True,

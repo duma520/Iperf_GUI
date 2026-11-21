@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp": "2026-01-13 06:04:51",
+    "test_type": "TCP",
+    "transfer": 1.07,
+    "bandwidth": 918.0,
+    "jitter": 0,
+    "lost_packets": 0,
+    "lost_percent": 0,
+    "raw_output": "Connecting to host ***已脱敏***-内网IP, port 5201\n[  4] local ***已脱敏***-内网IP port 31519 connected to ***已脱敏***-内网IP port 5201\n[ ID] Interval           Transfer     Bitrate\n[  4]   0.00-1.00   sec   110 MBytes   922 Mbits/sec                  \n[  4]   1.00-2.00   sec   108 MBytes   907 Mbits/sec                  \n[  4]   2.00-3.00   sec   107 MBytes   897 Mbits/sec                  \n[  4]   3.00-4.00   sec   111 MBytes   935 Mbits/sec                  \n[  4]   4.00-5.00   sec   111 MBytes   931 Mbits/sec                  \n[  4]   5.00-6.00   sec   111 MBytes   928 Mbits/sec                  \n[  4]   6.00-7.00   sec   110 MBytes   926 Mbits/sec                  \n[  4]   7.00-8.00   sec   110 MBytes   927 Mbits/sec                  \n[  4]   8.00-9.00   sec   107 MBytes   901 Mbits/sec                  \n[  4]   9.00-10.00  sec   108 MBytes   904 Mbits/sec                  \n- - - - - - - - - - - - - - - - - - - - - - - - -\n[ ID] Interval           Transfer     Bitrate\n[  4]   0.00-10.00  sec  1.07 GBytes   918 Mbits/sec                  sender\n[  4]   0.00-10.00  sec  1.07 GBytes   917 Mbits/sec                  receiver\niperf Done.\n"
+  }
+]

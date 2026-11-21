@@ -210,6 +210,12 @@ class Iperf3Worker(QThread):
             self.output_received.emit(f"执行命令: {' '.join(cmd)}\n")
             
             # 执行iperf3
+            # 根据操作系统设置启动标志
+            creationflags = 0
+            if sys.platform == 'win32':
+                # 在Windows上隐藏控制台窗口
+                creationflags = subprocess.CREATE_NO_WINDOW
+
             self.process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -218,7 +224,8 @@ class Iperf3Worker(QThread):
                 encoding='utf-8',
                 errors='ignore',
                 bufsize=1,
-                universal_newlines=True
+                universal_newlines=True,
+                creationflags=creationflags 
             )
             
             # 读取输出
@@ -489,6 +496,12 @@ class Iperf3GUI(QMainWindow):
         self.load_settings()
         self.setup_connections()
         
+        # 添加状态栏消息队列和定时器
+        self.status_messages = []
+        self.status_timer = QTimer()
+        self.status_timer.timeout.connect(self.process_status_message)
+        self.status_timer.setInterval(3000)  # 3秒显示时间
+        
     def init_ui(self):
         """初始化界面"""
         # 设置窗口属性
@@ -543,7 +556,21 @@ class Iperf3GUI(QMainWindow):
         
         # 应用样式
         self.apply_styles()
-        
+
+    def show_status_message(self, message, timeout=3000):
+        """在状态栏显示消息"""
+        self.status_bar.showMessage(message, timeout)
+    
+    def process_status_message(self):
+        """处理状态栏消息队列"""
+        if self.status_messages:
+            message = self.status_messages.pop(0)
+            self.status_bar.showMessage(message, 3000)
+        else:
+            self.status_timer.stop()
+
+
+
     def create_test_tab(self):
         """创建测试配置标签页"""
         test_tab = QWidget()
@@ -1182,40 +1209,46 @@ class Iperf3GUI(QMainWindow):
     
     def show_help(self):
         """显示帮助"""
-        help_text = """
-        iperf3 网络性能测试工具 - 完整版
+        # 在状态栏显示简要帮助信息
+        self.show_status_message("查看帮助：请参考 iperf3 官方文档或查看程序内的工具提示")
         
-        支持所有 iperf3 选项：
+        # 将详细帮助信息显示在结果区域
+        help_text = """iperf3 网络性能测试工具 - 完整版
         
-        基础选项：
-        - -c/-s: 客户端/服务器模式
-        - -p: 端口号
-        - -t: 测试时间
-        - -P: 并行流数量
-        - -u: UDP协议
-        - -b: 带宽限制
+支持所有 iperf3 选项：
+
+基础选项：
+- -c/-s: 客户端/服务器模式
+- -p: 端口号
+- -t: 测试时间
+- -P: 并行流数量
+- -u: UDP协议
+- -b: 带宽限制
+
+高级选项：
+- -w: TCP窗口大小
+- -M: TCP MSS大小
+- -N: 禁用Nagle算法
+- -R: 反向测试
+- --bidir: 双向测试
+- -4/-6: IPv4/IPv6
+
+服务器选项：
+- -D: 守护进程模式
+- --server-bitrate-limit: 服务器带宽限制
+- --idle-timeout: 空闲超时
+
+认证选项：
+- --username: 用户名
+- --rsa-private-key-path: RSA私钥路径
+
+更多信息请参考 iperf3 官方文档。"""
         
-        高级选项：
-        - -w: TCP窗口大小
-        - -M: TCP MSS大小
-        - -N: 禁用Nagle算法
-        - -R: 反向测试
-        - --bidir: 双向测试
-        - -4/-6: IPv4/IPv6
-        
-        服务器选项：
-        - -D: 守护进程模式
-        - --server-bitrate-limit: 服务器带宽限制
-        - --idle-timeout: 空闲超时
-        
-        认证选项：
-        - --username: 用户名
-        - --rsa-private-key-path: RSA私钥路径
-        
-        更多信息请参考 iperf3 官方文档。
-        """
-        
-        QMessageBox.information(self, "帮助", help_text)
+        # 切换到结果标签页并显示帮助
+        self.tab_widget.setCurrentIndex(3)  # 结果标签页索引
+        self.result_text.clear()
+        self.result_text.append(help_text)
+
     
     def on_mode_changed(self, mode):
         """处理模式切换"""
@@ -1237,7 +1270,7 @@ class Iperf3GUI(QMainWindow):
     def start_test(self):
         """开始测试"""
         if self.worker and self.worker.isRunning():
-            QMessageBox.warning(self, "警告", "测试正在进行中")
+            self.show_status_message("测试正在进行中")
             return
         
         # 验证输入
@@ -1285,13 +1318,13 @@ class Iperf3GUI(QMainWindow):
         if mode == "客户端":
             server_ip = self.server_ip_edit.text().strip()
             if not server_ip:
-                QMessageBox.warning(self, "输入错误", "请输入服务器地址")
+                self.show_status_message("请输入服务器地址")
                 self.server_ip_edit.setFocus()
                 return False
         
         port = self.port_edit.text().strip()
         if port and not port.isdigit():
-            QMessageBox.warning(self, "输入错误", "端口必须是数字")
+            self.show_status_message("端口必须是数字")
             self.port_edit.setFocus()
             return False
         
@@ -1462,14 +1495,13 @@ class Iperf3GUI(QMainWindow):
         
         # 显示完成消息
         if result["status"] == "success":
-            QMessageBox.information(self, "完成", "测试完成")
+            self.show_status_message("测试完成")
     
     def on_test_error(self, error_message):
         """测试错误处理"""
         self.append_output(f"\n错误: {error_message}\n")
-        self.status_bar.showMessage("测试出错")
+        self.show_status_message(f"测试出错: {error_message}")
         self.reset_ui_state()
-        QMessageBox.critical(self, "错误", error_message)
     
     def reset_ui_state(self):
         """重置UI状态"""
@@ -1480,7 +1512,7 @@ class Iperf3GUI(QMainWindow):
     def save_result(self):
         """保存测试结果"""
         if not self.result_text.toPlainText().strip():
-            QMessageBox.warning(self, "警告", "没有测试结果可保存")
+            self.show_status_message("没有测试结果可保存")
             return
         
         file_path, _ = QFileDialog.getSaveFileName(
@@ -1501,9 +1533,9 @@ class Iperf3GUI(QMainWindow):
                     f.write("=" * 50 + "\n")
                     f.write(self.result_text.toPlainText())
                 
-                QMessageBox.information(self, "成功", f"测试结果已保存到: {file_path}")
+                self.show_status_message(f"测试结果已保存到: {file_path}")
             except Exception as e:
-                QMessageBox.critical(self, "错误", f"保存失败: {str(e)}")
+                self.show_status_message(f"保存失败: {str(e)}")
     
     def save_config(self):
         """保存配置"""
@@ -1590,9 +1622,9 @@ class Iperf3GUI(QMainWindow):
         
         self.settings_manager.settings.update(config)
         if self.settings_manager.save_all():
-            QMessageBox.information(self, "成功", "配置已保存")
+            self.show_status_message("配置已保存")
         else:
-            QMessageBox.warning(self, "错误", "保存配置失败")
+            self.show_status_message("保存配置失败")
     
     def load_config(self):
         """加载配置"""
@@ -1726,7 +1758,7 @@ class Iperf3GUI(QMainWindow):
         if index >= 0:
             self.debug_level_combo.setCurrentIndex(index)
         
-        QMessageBox.information(self, "成功", "配置已加载")
+        self.show_status_message("配置已加载")
         
         # 更新模式相关控件状态
         self.on_mode_changed(self.mode_combo.currentText())
@@ -1734,15 +1766,12 @@ class Iperf3GUI(QMainWindow):
     
     def reset_config(self):
         """重置配置"""
-        reply = QMessageBox.question(
-            self, "确认",
-            "确定要重置所有配置吗？",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        
-        if reply == QMessageBox.Yes:
-            self.settings_manager = SettingsManager()
-            self.load_config()
+        # 使用状态栏提示代替确认对话框
+        self.show_status_message("正在重置配置...")
+        self.settings_manager = SettingsManager()
+        self.load_config()
+        self.show_status_message("配置已重置")
+
     
     def save_to_history(self):
         """保存到历史记录"""
@@ -1782,19 +1811,14 @@ class Iperf3GUI(QMainWindow):
     
     def clear_history(self):
         """清空历史记录"""
-        reply = QMessageBox.question(
-            self, "确认",
-            "确定要清空历史记录吗？",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        
-        if reply == QMessageBox.Yes:
-            self.history_table.setRowCount(0)
+        # 使用状态栏提示代替确认对话框
+        self.history_table.setRowCount(0)
+        self.show_status_message("历史记录已清空")
     
     def export_history(self):
         """导出历史记录"""
         if self.history_table.rowCount() == 0:
-            QMessageBox.warning(self, "警告", "没有历史记录可导出")
+            self.show_status_message("没有历史记录可导出")
             return
         
         file_path, _ = QFileDialog.getSaveFileName(
@@ -1818,9 +1842,9 @@ class Iperf3GUI(QMainWindow):
                             row_data.append(item.text() if item else "")
                         f.write(','.join(row_data) + '\n')
                 
-                QMessageBox.information(self, "成功", f"历史记录已导出到: {file_path}")
+                self.show_status_message(f"历史记录已导出到: {file_path}")
             except Exception as e:
-                QMessageBox.critical(self, "错误", f"导出失败: {str(e)}")
+                self.show_status_message(f"导出失败: {str(e)}")
     
     def load_history(self):
         """加载历史记录"""
@@ -1845,9 +1869,9 @@ class Iperf3GUI(QMainWindow):
                                 for col in range(min(10, len(data))):
                                     self.history_table.setItem(row, col, QTableWidgetItem(data[col]))
                 
-                QMessageBox.information(self, "成功", "历史记录已加载")
+                self.show_status_message("历史记录已加载")
             except Exception as e:
-                QMessageBox.critical(self, "错误", f"加载失败: {str(e)}")
+                self.show_status_message(f"加载失败: {str(e)}")
     
     def apply_styles(self):
         """应用样式"""

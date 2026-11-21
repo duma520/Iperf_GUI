@@ -1,0 +1,1 @@
+pyinstaller --windowed  --noconfirm  --icon=icon.ico --add-data "icon.ico;." iperf_gui.py
